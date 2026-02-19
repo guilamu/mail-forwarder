@@ -177,7 +177,3 @@ mail-forwarder/
 ├── LICENSE                 # Licence MIT
 └── README.md               # Ce fichier
 ```
-
-## 📄 Licence
-
-Ce projet est sous licence [MIT](LICENSE).
