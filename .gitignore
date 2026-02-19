@@ -1,0 +1,14 @@
+# Environment variables (contient les identifiants)
+.env
+
+# Virtual environment
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,40 @@
+name: Mail Forwarder
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      init:
+        description: 'Initialiser les flags (marquer tous les mails existants comme transférés)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  forward:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Créer le fichier .env
+        run: |
+          cat <<EOF > .env
+          IMAP_USER=${{ secrets.IMAP_USER }}
+          IMAP_PASS=${{ secrets.IMAP_PASS }}
+          GMAIL_USER=${{ secrets.GMAIL_USER }}
+          GMAIL_PASS=${{ secrets.GMAIL_PASS }}
+          EOF
+
+      - name: Exécuter le script
+        run: |
+          if [ "${{ github.event.inputs.init }}" = "true" ]; then
+            python forwarder.py --init
+          else
+            python forwarder.py
+          fi
