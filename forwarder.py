@@ -71,29 +71,46 @@ def forward_unseen_mails():
         fwd["Reply-To"]          = sender
         fwd["X-Forwarded-From"]  = sender
 
-        # Corps du mail
+        # Corps du mail — collect body parts and attachments separately
+        text_parts = []  # (subtype, content) tuples
+        attachments = []
+
         if original.is_multipart():
             for part in original.walk():
                 ctype = part.get_content_type()
-                if ctype == "text/plain" and not part.get_filename():
-                    body = part.get_payload(decode=True).decode("utf-8", errors="replace")
-                    fwd.attach(MIMEText(body, "plain"))
-                elif ctype == "text/html" and not part.get_filename():
-                    html = part.get_payload(decode=True).decode("utf-8", errors="replace")
-                    fwd.attach(MIMEText(html, "html"))
-                elif part.get_filename():
-                    attachment = MIMEBase(*ctype.split("/"))
-                    attachment.set_payload(part.get_payload(decode=True))
-                    encoders.encode_base64(attachment)
-                    attachment.add_header(
+                if part.get_filename():
+                    att = MIMEBase(*ctype.split("/"))
+                    att.set_payload(part.get_payload(decode=True))
+                    encoders.encode_base64(att)
+                    att.add_header(
                         "Content-Disposition",
                         "attachment",
                         filename=part.get_filename()
                     )
-                    fwd.attach(attachment)
+                    attachments.append(att)
+                elif ctype == "text/plain":
+                    text_parts.append(("plain", part.get_payload(decode=True).decode("utf-8", errors="replace")))
+                elif ctype == "text/html":
+                    text_parts.append(("html", part.get_payload(decode=True).decode("utf-8", errors="replace")))
         else:
-            body = original.get_payload(decode=True).decode("utf-8", errors="replace")
-            fwd.attach(MIMEText(body, "plain"))
+            text_parts.append(("plain", original.get_payload(decode=True).decode("utf-8", errors="replace")))
+
+        # Build the proper MIME structure:
+        # - If both text and html exist, wrap them in multipart/alternative
+        #   so the email client picks the best one (html) instead of showing both.
+        # - If there are also attachments, the alternative part goes inside
+        #   the outer multipart/mixed.
+        if len(text_parts) > 1:
+            alt = MIMEMultipart("alternative")
+            for subtype, content in text_parts:
+                alt.attach(MIMEText(content, subtype))
+            fwd.attach(alt)
+        elif text_parts:
+            subtype, content = text_parts[0]
+            fwd.attach(MIMEText(content, subtype))
+
+        for att in attachments:
+            fwd.attach(att)
 
         smtp.sendmail(GMAIL_USER, GMAIL_TO, fwd.as_string())
         imap.store(mail_id, "+FLAGS", "FORWARDED")
