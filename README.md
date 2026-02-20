@@ -86,7 +86,7 @@ git branch -M main
 git push -u origin main
 ```
 
-> [!CAUTION]
+> [!ATTENTION]
 > Vérifiez que le fichier `.env` n'apparaît **PAS** dans `git status` avant de pousser. Le `.gitignore` l'exclut automatiquement.
 
 ### 1.3 Configurer les Secrets GitHub
