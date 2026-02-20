@@ -174,6 +174,5 @@ mail-forwarder/
 ├── .env.example            # Template de configuration
 ├── .gitignore              # Fichiers exclus de Git
 ├── requirements.txt        # Dépendances (aucune)
-├── LICENSE                 # Licence MIT
 └── README.md               # Ce fichier
 ```
