@@ -93,7 +93,8 @@ def forward_unseen_mails():
                 elif ctype == "text/html":
                     text_parts.append(("html", part.get_payload(decode=True).decode("utf-8", errors="replace")))
         else:
-            text_parts.append(("plain", original.get_payload(decode=True).decode("utf-8", errors="replace")))
+            subtype = "html" if original.get_content_type() == "text/html" else "plain"
+            text_parts.append((subtype, original.get_payload(decode=True).decode("utf-8", errors="replace")))
 
         # Build the proper MIME structure:
         # - If both text and html exist, wrap them in multipart/alternative
